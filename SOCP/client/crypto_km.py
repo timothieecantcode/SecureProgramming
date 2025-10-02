@@ -38,3 +38,20 @@ def load_pem_priv(path: str, password:Optional[bytes] = None) -> rsa.RSAPrivateK
         sk = serialization.load_pem_private_key(f.read(), password=password)
     assert_rsa4096_key(sk)
     return sk
+
+# ---- Public key export/ import (DER SubjectPublicKeyInfo) ---- #
+def pub_der(sk: rsa.RSAPrivateKey) -> bytes:
+    assert_rsa4096_key(sk)
+    # return a byte string containing the public key in DER format
+    return sk.public_key().public_bytes(encoding=serialization.Encoding.DER, format=serialization.PublicFormat.SubjectPublicKeyInfo,)
+
+def pub_from_der(der: bytes) -> rsa.RSAPublicKey:
+    pk = serialization.load_der_public_key(der)
+    assert_rsa4096_key(pk)
+    # return the public key
+    return pk
+
+
+# ---- Convenience for wire format ---- #
+def pub_der_b64u(sk: rsa.RSAPrivateKey) -> str:
+    return b64u(pub_der(sk))
