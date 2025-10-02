@@ -1,6 +1,8 @@
 import base64
 import re
 
+# ---- BASE64URL helpers ---- #
+
 # make sure string only has legal Bae64URL characters
 _B64URL_RE = re.compile(r'^[A-Za-z0-9_-]+$')
 
