@@ -8,6 +8,6 @@ payload = {"user_id": "Alice", "location": "server_123"}
 sig = server_sign_payload(srv, payload)
 print("verify ok:", server_verify_payload(pub_b64u, payload, sig))
 
-# tamper the payload
+# tamper the payload -> must fail
 tampered = {**payload, "location": "server_999"}
 print("verify tamper:", server_verify_payload(pub_b64u, tampered, sig))

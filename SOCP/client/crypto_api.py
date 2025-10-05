@@ -29,8 +29,8 @@ def unwrap_key_rsa_oaep(sk: rsa.RSAPrivateKey, wrapped: bytes) -> bytes:
 
 # ---- AES-256-GCM ---- #
 def aesgcm_encrypt(key32: bytes, plaintext: bytes, aad: bytes):
-    """Returns (iv, ciphertext, tag)"""
-    assert len(key32) == 32, "AES key must be 256 bits (32 bytes)"
+    # Returns (iv, ciphertext, tag)
+    assert len(key32) == 32  # AES key must be 256 bits (32 bytes)
     iv = os.urandom(12)  # random 96-bit initialisation vector
     aesgcm = AESGCM(key32)
     ct_tag = aesgcm.encrypt(iv, plaintext, aad)

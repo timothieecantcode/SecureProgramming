@@ -6,12 +6,12 @@ from SOCP.client.crypto_km import pub_from_der, pub_der, pub_der_b64u
 import os
 
 
-# ---- content hash ---- #
+# ---- Content hash ---- #
 def dm_content_hash(cipher_b64u, iv_b64u, tag_b64u, from_id, to_id, ts_ms):
     return sha256_bytes(ub64u(cipher_b64u), ub64u(iv_b64u), ub64u(tag_b64u), from_id.encode(), to_id.encode(), str(ts_ms).encode(),)
 
 
-# ---- build payload for sender ---- #
+# ---- Build payload for sender ---- #
 def make_dm_payload(sender_priv, receiver_pub_der_b64u, plaintext, from_id, to_id, ts_ms):
     key32 = os.urandom(32)
     iv, ct, tag = aesgcm_encrypt(key32, plaintext, b"")
@@ -32,12 +32,12 @@ def make_dm_payload(sender_priv, receiver_pub_der_b64u, plaintext, from_id, to_i
     }
 
 
-# ---- verify + decrypt for receiver ---- #
+# ---- Verify + Decrypt for receiver ---- #
 def open_dm_payload(receiver_priv, payload, from_id, to_id, ts_ms):
     h = dm_content_hash(
         payload["ciphertext"], payload["iv"], payload["tag"], from_id, to_id, ts_ms)
     sender_pub = pub_from_der(ub64u(payload["sender_pub"]))
-    if not verify_pss(sender_pub, ub64u["content_sig"], h):
+    if not verify_pss(sender_pub, ub64u(payload["content_sig"]), h):
         raise ValueError("INVALID_SIG")
 
     key32 = unwrap_key_rsa_oaep(receiver_priv, ub64u(payload["wrapped_key"]))
