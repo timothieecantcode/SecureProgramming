@@ -3,7 +3,7 @@ import os
 from typing import Optional
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives import serialization
-from common.b64url import b64u
+from SOCP.common.b64url import b64u
 
 
 # ---- RSAA-4096 generation ---- #
