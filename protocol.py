@@ -211,7 +211,3 @@ def messageSelect(msg_type, payload):
                 "payload":{"code":"USER_NOT_FOUND","detail":"Bob not registered"},
                 "sig":"..."
             }
-
-
-def msgSend():
-    if msg_type == "SERVER_HELLO_JOIN":
