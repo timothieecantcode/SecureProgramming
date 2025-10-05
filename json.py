@@ -213,3 +213,5 @@ def messageSelect(msg_type, payload):
             }
 
 
+def msgSend():
+    if msg_type == "SERVER_HELLO_JOIN":
