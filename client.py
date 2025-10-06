@@ -5,6 +5,9 @@ import time
 import base64
 import os
 import hashlib
+from client import *
+from common import *
+from server import *
 
 
 class Client:
@@ -201,7 +204,7 @@ class Client:
                 await writer.drain()
                 print("[List] Requested user list from server...")
                 continue
-            
+
             # -------------------- DIRECT MESSAGE --------------------
             if cmd.startswith("/tell "):
                 parts = cmd.split(" ", 2)

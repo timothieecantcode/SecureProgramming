@@ -3,10 +3,9 @@ import asyncio
 import json
 import uuid
 import time
-import base64
-import os
-import hashlib
-
+from client import *
+from common import *
+from server import *
 class Server:
     def __init__(self, host="127.0.0.1", port=0, introducer_host="127.0.0.1", introducer_port=8000):
         self.server_id = str(uuid.uuid4())
