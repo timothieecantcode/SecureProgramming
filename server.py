@@ -178,6 +178,22 @@ class Server:
                             await self.active_clients[sender].drain()
                         print(f"[Error] USER_NOT_FOUND for recipient {recipient}")
 
+                # -------------------- USER_LIST_REQUEST --------------------   
+                elif msg_type == "USER_LIST_REQUEST":
+                    # send current sorted list back to requester
+                    users_sorted = [{"user_id": uid, "server_id": sid} for uid, sid in sorted(self.user_locations.items())]
+                    resp = {
+                        "type": "USER_LIST",
+                        "from": self.server_id,
+                        "to": sender,
+                        #"ts": int(time.time() * 1000),
+                        "payload": {"users": users_sorted},
+                        "sig": ""
+                    }
+                    writer.write((json.dumps(resp) + "\n").encode("utf-8"))
+                    await writer.drain()
+                    print(f"[User List] Sent USER_LIST to {sender} on request")
+
                 # -------------------- MSG_BROADCAST --------------------
                 elif msg_type == "MSG_BROADCAST":
                     sender_id = message.get("from")

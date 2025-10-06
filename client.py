@@ -40,6 +40,16 @@ class Client:
                     self.users[user_id] = server_id
                     print(f"\n[Network Update] User {user_id} on server {server_id}")
 
+                elif msg_type == "USER_LIST":
+                    users = message.get("payload", {}).get("users", [])
+                    # update local cache and print sorted
+                    self.users = {u["user_id"]: u.get("server_id") for u in users}
+                    print("\n[User List from server]")
+                    for uid in sorted(self.users.keys()):
+                        print(f"  {uid} -> Server {self.users[uid]}")
+                    continue
+
+
                 # --- File transfer messages ---
                 elif msg_type == "FILE_START":
                     payload = message["payload"]
@@ -134,7 +144,7 @@ class Client:
         }
         writer.write((json.dumps(start_msg) + "\n").encode("utf-8"))
         await writer.drain()
-        print(f"[File] 📤 Starting file transfer '{file_path}' ({filesize} bytes)")
+        print(f"[File] Starting file transfer '{file_path}' ({filesize} bytes)")
 
         # FILE_CHUNK
         CHUNK_SIZE = 32 * 1024
@@ -175,39 +185,82 @@ class Client:
     # -------------------- CHAT LOOP --------------------
     async def chat_loop(self, writer):
         while True:
-            msg = await asyncio.to_thread(input, "Enter message (id|text) or file|id|path or broadcast|text: ")
+            cmd = await asyncio.to_thread(input, "Enter command (/list, /tell, /all, /file): ")
 
-            if msg.startswith("file|"):
-                try:
-                    _, to_id, path = msg.split("|", 2)
-                    await self.send_file(writer, to_id.strip(), path.strip())
-                except ValueError:
-                    print("[Input] Invalid format. Use: file|recipient_id|path")
+            # -------------------- LIST USERS --------------------
+            if cmd.strip() == "/list":
+                req = {
+                    "type": "USER_LIST_REQUEST",
+                    "from": self.client_id,
+                    "to": "*",
+                    "ts": int(time.time() * 1000),
+                    "payload": {},
+                    "sig": ""
+                }
+                writer.write((json.dumps(req) + "\n").encode("utf-8"))
+                await writer.drain()
+                print("[List] Requested user list from server...")
+                continue
+            
+            # -------------------- DIRECT MESSAGE --------------------
+            if cmd.startswith("/tell "):
+                parts = cmd.split(" ", 2)
+                if len(parts) < 3:
+                    print("[Input] Usage: /tell <user_id> <message>")
+                    continue
+
+                to_id, text = parts[1], parts[2]
+                message = {
+                    "type": "MSG_DIRECT",
+                    "from": self.client_id,
+                    "to": to_id.strip(),
+                    "ts": int(time.time() * 1000),
+                    "payload": {"text": text.strip()},
+                    "sig": "",
+                    "visited_servers": []
+                }
+
+                writer.write((json.dumps(message) + "\n").encode("utf-8"))
+                await writer.drain()
+                print(f"[Sent] DM to {to_id}: {text}")
                 continue
 
-            if "|" not in msg:
-                print("[Input] Invalid format.")
+            # -------------------- BROADCAST --------------------
+            if cmd.startswith("/all "):
+                text = cmd[len("/all "):].strip()
+                if not text:
+                    print("[Input] Usage: /all <message>")
+                    continue
+
+                message = {
+                    "type": "MSG_BROADCAST",
+                    "from": self.client_id,
+                    "to": "*",
+                    "ts": int(time.time() * 1000),
+                    "payload": {"text": text},
+                    "sig": "",
+                    "visited_servers": []
+                }
+
+                writer.write((json.dumps(message) + "\n").encode("utf-8"))
+                await writer.drain()
+                print(f"[Broadcast] {text}")
                 continue
 
-            to_id, text = msg.split("|", 1)
-            message = {
-                "from": self.client_id,
-                "ts": int(time.time() * 1000),
-                "payload": {"text": text.strip()},
-                "sig": "",
-                "visited_servers": []
-            }
+            # -------------------- FILE TRANSFER --------------------
+            if cmd.startswith("/file "):
+                parts = cmd.split(" ", 2)
+                if len(parts) < 3:
+                    print("[Input] Usage: /file <user_id> <path>")
+                    continue
 
-            if to_id.lower() == "broadcast":
-                message["type"] = "MSG_BROADCAST"
-                message["to"] = "*"
-            else:
-                message["type"] = "MSG_DIRECT"
-                message["to"] = to_id.strip()
+                to_id, path = parts[1].strip(), parts[2].strip()
+                await self.send_file(writer, to_id, path)
+                continue
 
-            writer.write((json.dumps(message) + "\n").encode("utf-8"))
-            await writer.drain()
-            print(f"[Sent] {message['type']} to {message['to']}")
+            # -------------------- UNKNOWN COMMAND --------------------
+            print("[Input] Unknown command. Use /list, /tell, /all, or /file.")
+
 
     # -------------------- MAIN RUN LOOP --------------------
     async def run(self):
