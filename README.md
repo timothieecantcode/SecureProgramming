@@ -1,6 +1,6 @@
 Crypto API — quick usage
 
-#### ---- Generate / Load RSA Keys
+# Generate / Load RSA Keys
 
 from SOCP.client.crypto_km import gen_rsa_4096, save_pem_priv, load_pem_priv, pub_der_b64u
 
@@ -9,11 +9,11 @@ save_pem_priv(sk, "me.pem", password=b"pwd")
 sk = load_pem_priv("me.pem", password=b"pwd")
 pub_b64u = pub_der_b64u(sk) # share this with others
 
-#### ---- Direct Message (DM)
+# Direct Message (DM)
 
 from SOCP.client.crypto_dm import make_dm_payload, open_dm_payload
 
-# Sender
+## Sender
 
 payload = make_dm_payload(my_priv, peer_pub_b64u, b"hi there", "Alice", "Bob", 1700000400000)
 envelope = {
@@ -25,14 +25,14 @@ envelope = {
 "sig": ""
 }
 
-# Receiver
+## Receiver
 
 pt, sender_pub = open_dm_payload(
 my_priv, envelope["payload"], envelope["from"], envelope["to"], envelope["ts"]
 )
 print(pt.decode())
 
-#### ---- File Transfer (RSA-OAEP)
+# File Transfer (RSA-OAEP)
 
 Each file chunk is encrypted directly with the receiver’s RSA-4096 public key.
 
@@ -46,12 +46,12 @@ receiver_pub_b64u = pub_der_b64u(receiver)
 file_id = "uuid-123"
 payload = make_file_chunk_payload(receiver_pub_b64u, file_id, 0, b"chunk data")
 
-# Receiver side
+## Receiver side
 
 pt = open_file_chunk_payload(receiver, payload)
 print("Decrypted chunk:", pt)
 
-#### ---- Public Channel Messages
+# Public Channel Messages
 
 Messages broadcasted to everyone but still encrypted per recipient with RSA-OAEP.
 
@@ -62,7 +62,7 @@ sender_priv, receiver_pub_b64u, b"hello world", "user_A", 1700000600000
 )
 pt, spk = open_public_payload(receiver_priv, payload, "user_A", 1700000600000)
 
-#### ---- Server Transport Signatures
+# Server Transport Signatures
 
 Used for verifying that inter-server payloads aren’t tampered with.
 
